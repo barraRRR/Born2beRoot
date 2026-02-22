@@ -31,7 +31,22 @@ I chose Debian for this project based on the following specific criteria:
 
 ## Instructions
 
-### VirtualBox Configuration
+### VirtualBox
+
+#### Hypervisors: VirtualBox vs. UTM
+Since this project was developed on **Apple Silicon (ARM64)**, the choice of hypervisor was a strategic decision between performance and learning value:
+
+* **UTM:** * **Nature:** A lightweight wrapper for Apple's native Virtualization.Framework and QEMU.
+    * **Pros:** Offers near-native performance on M1/M2/M3 chips through hardware acceleration.
+* **VirtualBox (Version 7.x):**
+    * **Nature:** A classic **Type 2 Hypervisor**.
+    * **Pros:** Highly standardized, robust interface, and advanced virtual networking capabilities.
+    * **Cons:** On ARM64, it is currently in "Beta" and uses a slower virtualization core compared to native frameworks.
+
+**Why I chose VirtualBox:**
+I decided to use **VirtualBox** despite it being less performant on Apple Silicon because it is a **universal industry standard**. Learning to manage a "traditional" hypervisor like VirtualBox provides skills that are directly transferable to Windows and Intel-based Linux environments.
+
+#### VirtualBox Configuration
 
 The virtual machine was configured with the following parameters to ensure compatibility with Apple Silicon (ARM64):
 * **Memory:** 1024 MB - Since the server operates without a Graphical User Interface (GUI), 1 GB of RAM is more than sufficient. This allocation ensures smooth performance for background services (SSH, Cron, UFW).
@@ -44,12 +59,12 @@ The virtual machine was configured with the following parameters to ensure compa
 The system follows a professional partitioning standard, combining the **UEFI** boot process with **LVM** (Logical Volume Management) over an **encrypted (LUKS)** layer. 
 
 | Partition | Type | Mount Point | Size | Description |
-| :--- | :--- | :--- | :--- | :--- |
-| `sda1` | Primary | `/boot/efi` | 100M | EFI System Partition |
-| `sda2` | Primary | `/boot` | 500M | Bootloader files |
-| `sda3` | Primary | `crypt` | 20G | Encrypted Physical Volume (LUKS) |
-| `LVMGroup-root` | Logical | `/` | 9G | Root filesystem |
-| `LVMGroup-swap` | Logical | `[SWAP]` | 1G | Swap space |
+| :--- | :--- | :--- | ---: | :--- |
+| `sda1` | Primary | `/boot/efi` | 100MB | EFI System Partition |
+| `sda2` | Primary | `/boot` | 500MB | Bootloader files |
+| `sda3` | Primary | `crypt` | 20GB | Encrypted Physical Volume (LUKS) |
+| `LVMGroup-root` | Logical | `/` | 9GB | Root filesystem |
+| `LVMGroup-swap` | Logical | `[SWAP]` | 1GB | Swap space |
 
 #### Why use EFI (`/boot/efi`)?
 Modern systems use **UEFI** (Unified Extensible Firmware Interface) instead of the legacy BIOS.
@@ -152,6 +167,13 @@ sudo ufw enable
 sudo ufw allow 4242
 sudo ufw status numbered
 ```
+#### UFW vs. firewalld
+* **UFW:**
+    * **Philosophy:** Designed to be "uncomplicated." It is a user-friendly frontend for `iptables` (or `nftables`).
+    * **Usage:** Ideal for standalone servers and simpler rule sets. It is the standard in the Debian/Ubuntu world.
+* **firewalld:**
+    * **Philosophy:** Uses "zones" to manage traffic based on the trust level of network connections.
+    * **Usage:** Standard in RHEL/Rocky Linux. It is more dynamic and suited for complex network environments.
 
 ### B. SSH Hardening
 
@@ -174,6 +196,41 @@ To access the server from the host machine, use the following command:
 `ssh jbarreir@localhost -p 4242`
 
 > **Note:** This requires VirtualBox Port Forwarding to be configured: **Host 4242 -> Guest 4242**.
+
+### C. Mandatory Access Control (MAC): AppArmor
+
+To enforce security policies, Linux systems use MAC (Mandatory Access Control) kernels. In this project, **AppArmor** is used.Although AppArmor is typically pre-installed in Debian, its status was verified and manually enabled to ensure the system's protection:
+
+1. **Installation:**
+   ```bash
+   sudo apt update
+   sudo apt install apparmor apparmor-utils
+   ```
+2. **Enabling the Service:**
+
+```Bash
+# Enable AppArmor to start at boot
+sudo systemctl enable apparmor
+sudo systemctl start apparmor
+```
+3. **Verifying Status:**
+To check if AppArmor is active and see how many profiles are loaded:
+
+```Bash
+sudo aa-status
+```
+> (Note: This command shows which processes are in "enforce mode" vs "complain mode").
+
+#### AppArmor vs. SELinux
+Both tools provide a security layer that restricts programs' capabilities, but they differ in complexity and approach.
+
+* **AppArmor (Debian's choice):**
+    * **Path-based:** It identifies files by their location in the file system.
+    * **Simplicity:** It is easier to configure and learn, using "profiles" to allow or deny specific actions.
+    * **Status:** It is installed and enabled by default in Debian 12.
+* **SELinux (RHEL/Rocky Linux's choice):**
+    * **Label-based:** It uses security contexts (labels) assigned to every file, process, and network port.
+    * **Complexity:** Much more granular and powerful, but has a steeper learning curve and is harder to troubleshoot.
 
 ## Password Policy
 
@@ -254,49 +311,49 @@ To ensure the script runs every 10 minutes from the system's boot, it was added 
 #!/bin/bash
 
 #		Arquitecture
-arc=$(uname -srvm | awk '{print $1 " " $2 " " $NF}')
+	arc=$(uname -srvm | awk '{print $1 " " $2 " " $NF}')
 
 # 		CPU
-pcpu=$(grep "processor" /proc/cpuinfo | wc -l)
+	pcpu=$(grep "processor" /proc/cpuinfo | wc -l)
 
 #		vCPU
-vcpu=$(grep "^processor" /proc/cpuinfo | wc -l)
+	vcpu=$(grep "^processor" /proc/cpuinfo | wc -l)
 
 #		RAM
-ram_total=$(free -m | awk '$1 == "Mem:" {print $2}')
-ram_use=$(free -m | awk '$1 == "Mem:" {print $3}')
-ram_pct=$(free | awk '$1 == "Mem:" {printf("%.2f"), $3/$2*100}')
+	ram_total=$(free -m | awk '$1 == "Mem:" {print $2}')
+	ram_use=$(free -m | awk '$1 == "Mem:" {print $3}')
+	ram_pct=$(free | awk '$1 == "Mem:" {printf("%.2f"), $3/$2*100}')
 
 #		DISK
-disk_total=$(df -m | grep "/$" | awk '{print $2}')
-disk_use=$(df -m | grep "/$" | awk '{print $3}')
-disk_pct=$(df -m | grep "/$" | awk '{print $5}')
+	disk_total=$(df -m | grep "/$" | awk '{print $2}')
+	disk_use=$(df -m | grep "/$" | awk '{print $3}')
+	disk_pct=$(df -m | grep "/$" | awk '{print $5}')
 
 #		CPU Load
-cpul=$(top -bn2 -d 1.0 | grep "Cpu(s)" | tail -1 | awk '{print 100 - $8"%"}')
+	cpul=$(top -bn2 -d 1.0 | grep "Cpu(s)" | tail -1 | awk '{print 100 - $8"%"}')
 
 #		LAST BOOT
-lb=$(who -b | awk '{print $3 " " $4}')
+	lb=$(who -b | awk '{print $3 " " $4}')
 
 #		LVM
-lvmt=$(lsblk | grep "lvm" | wc -l)
-lvmu=$(if [ $lvmt -gt 0 ]; then echo yes; else echo no; fi)
+	lvmt=$(lsblk | grep "lvm" | wc -l)
+	lvmu=$(if [ $lvmt -gt 0 ]; then echo yes; else echo no; fi)
 
 #		TCP
-tcpc=$(ss -ta | grep ESTAB | wc -l)
+	tcpc=$(ss -ta | grep ESTAB | wc -l)
 
 #		USER LOG
-ulog=$(users | wc -w)
+	ulog=$(users | wc -w)
 
 #		NETWORK
-ip=$(hostname -I | awk '{print $1}')
-mac=$(ip link | grep "link/ether" | awk '{print $2}')
+	ip=$(hostname -I | awk '{print $1}')
+	mac=$(ip link | grep "link/ether" | awk '{print $2}')
 
 #		SUDO
-cmds=$(journalctl _COMM=sudo | grep COMMAND | wc -l)
+	cmds=$(journalctl _COMM=sudo | grep COMMAND | wc -l)
 
 #		OUTPUT
-wall "	*** SERVER STATUS ***
+	wall "	*** SERVER STATUS ***
 	
 	#Architecture   : $arc
 	#CPU physical   : $pcpu

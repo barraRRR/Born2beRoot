@@ -8,7 +8,7 @@
 ** Written by VirtualBox 7.2.6 (r172322)
 -->
 <VirtualBox xmlns="http://www.virtualbox.org/" version="1.20-macosx">
-  <Machine uuid="{d817d695-376a-45c1-8e9d-ff44e727ab28}" name="jbarreir42" OSType="Debian_arm64" snapshotFolder="Snapshots" lastStateChange="2026-02-22T09:46:39Z">
+  <Machine uuid="{d817d695-376a-45c1-8e9d-ff44e727ab28}" name="jbarreir42" OSType="Debian_arm64" snapshotFolder="Snapshots" lastStateChange="2026-02-22T11:27:40Z">
     <MediaRegistry>
       <HardDisks>
         <HardDisk uuid="{837ad910-b134-41b2-aa84-4d0db171e5e3}" location="jbarreir42.vdi" format="VDI" type="Normal"/>
@@ -19,7 +19,7 @@
     </MediaRegistry>
     <ExtraData>
       <ExtraDataItem name="GUI/LastCloseAction" value="PowerOff"/>
-      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="1706,415,729,496"/>
+      <ExtraDataItem name="GUI/LastNormalWindowPosition" value="1280,415,1279,826"/>
       <ExtraDataItem name="GUI/ScaleFactor" value="1"/>
     </ExtraData>
     <Hardware>
@@ -51,7 +51,7 @@
       <AudioAdapter controller="HDA" useDefault="true" driver="CoreAudio" enabled="true" enabledOut="true"/>
       <Clipboard mode="Bidirectional"/>
       <GuestProperties>
-        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="en_US" timestamp="1771753572079816000" flags="RDONLYGUEST"/>
+        <GuestProperty name="/VirtualBox/HostInfo/GUI/LanguageID" value="en_US" timestamp="1771758576991329000" flags="RDONLYGUEST"/>
       </GuestProperties>
       <StorageControllers>
         <StorageController name="VirtioSCSI" type="VirtioSCSI" PortCount="2" useHostIOCache="false" Bootable="true">
