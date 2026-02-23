@@ -330,7 +330,7 @@ To ensure the script runs every 10 minutes from the system's boot, it was added 
 	disk_pct=$(df -m | grep "/$" | awk '{print $5}')
 
 #		CPU Load
-	cpul=$(top -bn2 -d 1.0 | grep "Cpu(s)" | tail -1 | awk '{print 100 - $8"%"}')
+	cpul=$(vmstat 1 2 | tail -1 | awk '{print 100 - $15}')"%"
 
 #		LAST BOOT
 	lb=$(who -b | awk '{print $3 " " $4}')
