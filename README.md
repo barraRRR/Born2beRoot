@@ -131,7 +131,7 @@ The project requires a strict security policy. This was configured by editing th
 
 ```bash
 Defaults    passwd_tries=3
-Defaults    badpass_message="Wrong password! Try again."
+Defaults    badpass_message="Access error! Try again."
 Defaults    logfile="/var/log/sudo/sudo_log"
 Defaults    log_input, log_output
 Defaults    iolog_dir="/var/log/sudo"
