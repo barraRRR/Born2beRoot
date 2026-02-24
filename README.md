@@ -49,8 +49,8 @@ I decided to use **VirtualBox** despite it being less performant on Apple Silico
 #### VirtualBox Configuration
 
 The virtual machine was configured with the following parameters to ensure compatibility with Apple Silicon (ARM64):
-* **Memory:** 1024 MB - Since the server operates without a Graphical User Interface (GUI), 1 GB of RAM is more than sufficient. This allocation ensures smooth performance for background services (SSH, Cron, UFW).
-* **Disk Space:** 20.00 GB (VDI) - While the system could technically run on a 10 GB disk, 20 GB was chosen to ensure long-term stability. This extra space accounts for the overhead required by **LVM encryption (LUKS)** and provides a safety margin for the mandatory **Sudo log files** and kernel updates, preventing "disk full" errors that could compromise the server's availability.
+* **Memory:**  2048 MB — 2 GB was allocated to ensure peak performance during the evaluation and to handle multiple concurrent SSH sessions and monitoring tasks without latency.
+* **Disk Space:** 10.00 GB (VDI) — This capacity is optimized through LVM (Logical Volume Management) to provide high availability for the operating system while maintaining sufficient overhead for mandatory Sudo log files and system security updates.
 * **Network:** Bridged Adapter or NAT with Port Forwarding (Port 4242 for SSH).
 
 ### Debian Installation Steps
@@ -62,9 +62,9 @@ The system follows a professional partitioning standard, combining the **UEFI** 
 | :--- | :--- | :--- | ---: | :--- |
 | `sda1` | Primary | `/boot/efi` | 100MB | EFI System Partition |
 | `sda2` | Primary | `/boot` | 500MB | Bootloader files |
-| `sda3` | Primary | `crypt` | 20GB | Encrypted Physical Volume (LUKS) |
-| `LVMGroup-root` | Logical | `/` | 9GB | Root filesystem |
-| `LVMGroup-swap` | Logical | `[SWAP]` | 1GB | Swap space |
+| `sda3` | Primary | `crypt` | 9.4GB | Encrypted Physical Volume (LUKS) |
+| `LVMGroup-root` | Logical | `/` | 7.5GB | Root filesystem |
+| `LVMGroup-swap` | Logical | `[SWAP]` | 1.9GB | Swap space |
 
 #### Why use EFI (`/boot/efi`)?
 Modern systems use **UEFI** (Unified Extensible Firmware Interface) instead of the legacy BIOS.
@@ -302,7 +302,7 @@ To ensure the script runs every 10 minutes from the system's boot, it was added 
 1. **Access Crontab:** `sudo crontab -e`
 2. **Schedule:**
 ```cron
-*/10 * * * * /usr/local/bin/monitoring.sh
+*/10 * * * * bash /usr/local/bin/monitoring.sh
 ```
 
 ### C. The code
