@@ -63,8 +63,11 @@ The system follows a professional partitioning standard, combining the **UEFI** 
 | `sda1` | Primary | `/boot/efi` | 100MB | EFI System Partition |
 | `sda2` | Primary | `/boot` | 500MB | Bootloader files |
 | `sda3` | Primary | `crypt` | 9.4GB | Encrypted Physical Volume (LUKS) |
-| `LVMGroup-root` | Logical | `/` | 7.5GB | Root filesystem |
+| `LVMGroup-root` | Logical | `/` | 2.5GB | Root filesystem |
 | `LVMGroup-swap` | Logical | `[SWAP]` | 1.9GB | Swap space |
+| `LVMGroup-home` | Logical | `/home` | 3.0GB | User personal folders |
+| `LVMGroup-var` | Logical | `/var` | 2.5GB | System logs |
+
 
 #### Why use EFI (`/boot/efi`)?
 Modern systems use **UEFI** (Unified Extensible Firmware Interface) instead of the legacy BIOS.
@@ -81,8 +84,13 @@ Modern systems use **UEFI** (Unified Extensible Firmware Interface) instead of t
 
 #### Logical Volume Management (LVM)
 Within the encrypted volume, I established a **Volume Group** (`LVMGroup`) to manage space dynamically:
-* **Root (`/`):** The main directory where the OS, system utilities, and mandatory sudo logs are stored.
-* **Swap:** Used as virtual memory. Placing it *inside* the encrypted LVM is a security best practice, ensuring that any sensitive data temporarily moved from RAM to disk remains encrypted. Same size as RAM per best practices.
+
+* **`/` (Root) — 2.6 GB**: Allocated for the core operating system and essential binaries, keeping the system footprint minimal but functional[cite: 77, 102].
+* **`/home` — 3.0 GB**: Dedicated space for user data and configuration files, ensuring user activities do not interfere with system-critical partitions[cite: 87].
+* **`/var` — 2.5 GB**: Separated to safely store system logs. [cite_start]This is particularly important because the project requires logging all **sudo** inputs and outputs to `/var/log/sudo/`[cite: 129, 130].
+* **`[SWAP]` — 3.0 GB**: Provided as virtual memory to maintain system stability during high-load operations[cite: 87].
+
+> **Design Choice:** By separating `/var`, I ensure that even if the mandatory sudo logs grow significantly due to the strict logging policy, the root partition remains unaffected, allowing the server to boot and function normally[cite: 130, 159].
 
 ### User and Root Configuration
 
